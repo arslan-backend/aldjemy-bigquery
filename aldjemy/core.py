@@ -43,6 +43,21 @@ def get_connection_string(alias="default"):
 
 
 def get_engine(alias="default", **kwargs):
+    # create engine for gcp bigquery
+    if hasattr(settings, 'ALDJEMY_BIGQUERY') and settings.ALDJEMY_BIGQUERY:
+        if not hasattr(settings, 'ALDJEMY_BIGQUERY_PROJECT'):
+            raise Exception("set ALDJEMY_BIGQUERY_PROJECT in project settings")
+        if not hasattr(settings, 'ALDJEMY_BIGQUERY_DEFAULT_DATASET'):
+            raise Exception("set ALDJEMY_BIGQUERY_DEFAULT_DATASET in project settings")
+        if not hasattr(settings, 'GOOGLE_APPLICATION_CREDENTIALS'):
+            raise Exception("set GOOGLE_APPLICATION_CREDENTIALS in project settings")
+        if alias == 'default':
+            alias = settings.ALDJEMY_BIGQUERY_DEFAULT_DATASET
+        engine = create_engine(
+            f'bigquery://{settings.ALDJEMY_BIGQUERY_PROJECT}/{alias}',
+            credentials_path=settings.GOOGLE_APPLICATION_CREDENTIALS
+        )
+        return engine
     if alias not in Cache.engines:
         engine_string = get_engine_string(alias)
         # we have to use autocommit=True, because SQLAlchemy
